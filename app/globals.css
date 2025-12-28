@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-reem-kufi: var(--font-reem-kufi);
+  --font-amiri: var(--font-amiri);
+  --font-cairo: var(--font-cairo);
+  --font-scheherazade: var(--font-scheherazade);
+  
+  /* ألوان مخصصة للمكتبة - Coffee Theme */
+  --color-coffee-50: #fefaf6;
+  --color-coffee-100: #f5e6d3;
+  --color-coffee-200: #e8d5c4;
+  --color-coffee-600: #8b6f47;
+  --color-coffee-700: #6f5238;
+  --color-coffee-800: #5c4228;
+  --color-beige-50: #fefaf9;
+  --color-beige-100: #fef3f2;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Utility class for line clamping */
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .font-reem-kufi {
+    font-family: var(--font-reem-kufi), sans-serif;
+  }
+  
+  .font-amiri {
+    font-family: var(--font-amiri), serif;
+  }
+  
+  .font-cairo {
+    font-family: var(--font-cairo), sans-serif;
+  }
+  
+  /* Calligraphic font for decorative Arabic text - inspired by traditional Islamic calligraphy */
+  .font-calligraphic {
+    font-family: var(--font-scheherazade), var(--font-amiri), serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    display: inline-block;
+    color: #000000;
+    text-shadow: 
+      0 4px 10px rgba(0, 0, 0, 0.25),
+      0 2px 5px rgba(0, 0, 0, 0.2),
+      0 1px 2px rgba(0, 0, 0, 0.15),
+      0 0 1px rgba(0, 0, 0, 0.1);
+    transform: scale(1.08);
+    filter: contrast(1.1) brightness(0.95);
+  }
+  
+  /* Special styling for الله - vertical calligraphic style */
+  .calligraphic-allah {
+    font-family: var(--font-scheherazade), var(--font-amiri), serif;
+    font-weight: 700;
+    font-size: 1.5em;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+    display: inline-block;
+    color: #000000;
+    text-shadow: 
+      0 5px 12px rgba(0, 0, 0, 0.3),
+      0 3px 6px rgba(0, 0, 0, 0.25),
+      0 1px 3px rgba(0, 0, 0, 0.2);
+    transform: scale(1.1) translateY(-2px);
+    filter: contrast(1.15) brightness(0.92);
+  }
+  
+  /* Special styling for محمد - flowing calligraphic style */
+  .calligraphic-muhammad {
+    font-family: var(--font-scheherazade), var(--font-amiri), serif;
+    font-weight: 700;
+    font-size: 1.4em;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    display: inline-block;
+    color: #000000;
+    text-shadow: 
+      0 4px 10px rgba(0, 0, 0, 0.28),
+      0 2px 5px rgba(0, 0, 0, 0.22),
+      0 1px 2px rgba(0, 0, 0, 0.18);
+    transform: scale(1.08);
+    filter: contrast(1.1) brightness(0.95);
+  }
+  
+  /* جعل الرمز ﷺ (صلى الله عليه وسلم) أكبر في أسماء الكتب */
+  .book-title-salawat {
+    font-size: 2.5em !important;
+    line-height: 1 !important;
+    vertical-align: baseline !important;
+    display: inline-block !important;
+    font-weight: normal !important;
+    margin: 0 2px !important;
+  }
+}
+
+/* Swiper Navigation Buttons - RTL Support - Professional Design */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #8b6f47 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+  top: 50% !important;
+  margin-top: -16px !important;
+  opacity: 0.8 !important;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: transparent !important;
+  transform: scale(1.05) !important;
+  color: #6f5238 !important;
+  opacity: 1 !important;
+}
+
+.swiper-button-next:active,
+.swiper-button-prev:active {
+  transform: scale(0.98) !important;
+}
+
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.swiper-button-next.swiper-button-disabled,
+.swiper-button-prev.swiper-button-disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+/* In RTL, swap next/prev buttons */
+[dir="rtl"] .swiper-button-next {
+  left: 10px !important;
+  right: auto !important;
+}
+
+[dir="rtl"] .swiper-button-prev {
+  right: 10px !important;
+  left: auto !important;
+}
+
+/* Swiper Pagination - Professional Design */
+.swiper-pagination {
+  position: relative !important;
+  margin-top: 24px !important;
+}
+
+.swiper-pagination-bullet {
+  background-color: #cbd5e1 !important;
+  opacity: 1 !important;
+  width: 10px !important;
+  height: 10px !important;
+  transition: all 0.3s ease !important;
+  margin: 0 6px !important;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #8b6f47 !important;
+  width: 32px !important;
+  border-radius: 5px !important;
+  box-shadow: 0 2px 8px rgba(139, 111, 71, 0.4) !important;
+}

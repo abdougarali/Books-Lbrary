@@ -1,0 +1,593 @@
+"use client";
+
+import { useMemo, useState, useEffect, type ReactElement } from "react";
+import Image from "next/image";
+import { books } from "@/data/books";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { trackFacebookEvent } from "@/components/FacebookPixel";
+
+/**
+ * صفحة Demo / MVP لمكتبة إسلامية
+ * صفحة واحدة بسيطة لعرض الكتب والطلب عبر واتساب
+ */
+export default function Home() {
+  /**
+   * دالة لفتح واتساب مع رسالة جاهزة
+   * ملاحظة: يجب تغيير رقم الواتساب برقم الواتساب الخاص بك
+   */
+  const handleWhatsAppOrder = (bookTitle: string, author: string, price?: number) => {
+    // تتبع حدث Facebook Pixel: InitiateCheckout (بدء عملية الشراء)
+    trackFacebookEvent("InitiateCheckout", {
+      content_name: bookTitle,
+      content_category: "Book",
+      content_ids: [bookTitle],
+      value: price ? price / 1000 : undefined, // تحويل من مليم إلى دينار
+      currency: "TND",
+    });
+
+    // تتبع حدث Contact (اتصال)
+    trackFacebookEvent("Contact", {
+      content_name: bookTitle,
+    });
+
+    let message = `السلام عليكم ورحمة الله وبركاته\n\n`;
+    message += `أريد طلب الكتاب التالي:\n`;
+    message += `📖 ${bookTitle}\n`;
+    message += `✍️ ${author}\n`;
+    if (price) {
+      const formattedPrice = formatPrice(price);
+      message += `💰 ${formattedPrice}\n`;
+    }
+    message += `\nشكراً لكم`;
+    const whatsappUrl = `https://wa.me/+21626010403?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  /**
+   * NumberFormatter محفوظ في الذاكرة لتحسين الأداء
+   */
+  const priceFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("ar-TN", {
+        style: "currency",
+        currency: "TND",
+        minimumFractionDigits: 0,
+      }),
+    []
+  );
+
+  /**
+   * دالة لتنسيق السعر
+   * تحويل السعر من مليم إلى دينار تونسي
+   */
+  const formatPrice = (price?: number) => {
+    if (!price) return null;
+    return priceFormatter.format(price / 1000);
+  };
+
+  /**
+   * دالة لتنسيق عنوان الكتاب - جعل الرمز ﷺ أكبر
+   */
+  const formatBookTitle = (title: string) => {
+    // استبدال الرمز ﷺ (U+FDFA) بـ span مع class لجعله أكبر
+    const salawat = '\uFDFA'; // الرمز ﷺ
+    
+    // إذا لم يوجد الرمز، أرجع العنوان كـ JSX
+    if (!title.includes(salawat)) {
+      return <>{title}</>;
+    }
+    
+    // تقسيم العنوان حسب الرمز
+    const parts: (string | ReactElement)[] = [];
+    const segments = title.split(salawat);
+    
+    segments.forEach((segment, index) => {
+      // إضافة النص
+      if (segment) {
+        parts.push(segment);
+      }
+      // إضافة الرمز مع span (إلا إذا كان آخر segment)
+      if (index < segments.length - 1) {
+        parts.push(
+          <span key={`salawat-${index}`} className="book-title-salawat">
+            {salawat}
+          </span>
+        );
+      }
+    });
+    
+    return <>{parts}</>;
+  };
+
+  // Structured Data for SEO - using useState to avoid hydration mismatch
+  const [origin, setOrigin] = useState("");
+  
+  useEffect(() => {
+    // Set the origin only on the client side after hydration
+    setOrigin(window.location.origin);
+  }, []);
+
+  const structuredData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@type": "BookStore",
+    name: "قل ربي زدني علما",
+    description: "مكتبة إسلامية أونلاين - اطلب كتابك المفضل عبر واتساب بسهولة",
+    url: origin || "", // Will be empty on server, set on client
+    telephone: "+905011375220",
+    priceRange: "$$",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "TN",
+      addressLocality: "تونس"
+    },
+    sameAs: [
+      "https://www.facebook.com/profile.php?id=100092725701351",
+      "https://www.instagram.com/Books.besher"
+    ],
+    potentialAction: {
+      "@type": "CommunicateAction",
+      target: "https://wa.me/+905011375220",
+      "http://schema.org/instrument": "WhatsApp"
+    }
+  }), [origin]);
+
+  return (
+    <div className="min-h-screen bg-[#f6f5f3]">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      {/* Header */}
+      <header className="bg-[#e6e2dc]/95 backdrop-blur-lg sticky top-0 z-50 border-b border-[#c6bbae]/30 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+          <div className="flex items-center justify-center">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-gray-900 font-bold font-reem-kufi text-center tracking-tight">
+              قل ربي زدني علما
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      {/* قسم عرض الكتب */}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-20">
+        {/* المجموعة الأولى */}
+        <div className="mb-12">
+          <Swiper
+            modules={[Navigation, Pagination]}
+            spaceBetween={24}
+            slidesPerView={1}
+            slidesPerGroup={1}
+            navigation
+            pagination={{ clickable: true }}
+            initialSlide={3}
+            breakpoints={{
+              640: {
+                slidesPerView: 2,
+                slidesPerGroup: 1,
+              },
+              1024: {
+                slidesPerView: 4,
+                slidesPerGroup: 1,
+              },
+            }}
+          >
+            {books.slice(0, 11).map((book, index) => (
+              <SwiperSlide key={book.id}>
+                <div className="group bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full border border-[#c6bbae]/40">
+                  {/* صورة الغلاف */}
+                  <div className="w-full h-72 sm:h-80 relative bg-gradient-to-br from-[#e6e2dc] to-[#c6bbae] overflow-hidden">
+                    <Image
+                      src={book.image}
+                      alt={`غلاف كتاب ${book.title} للمؤلف ${book.author}`}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      loading={index < 2 ? "eager" : "lazy"}
+                      priority={index < 2}
+                      quality={85}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* معلومات الكتاب */}
+                  <div className="p-5 sm:p-6 font-cairo flex flex-col h-[calc(100%-18rem)]">
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2.5 h-[3.5rem] overflow-hidden text-ellipsis line-clamp-2 leading-snug" title={book.title}>
+                        {formatBookTitle(book.title)}
+                      </h3>
+                      <p className="text-sm sm:text-base text-gray-600 mb-4 font-medium">{book.author}</p>
+
+                      {/* السعر */}
+                      {book.price && (
+                        <p className="text-xl sm:text-2xl font-bold text-[#8a6f47] mb-5">
+                          {formatPrice(book.price)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* زر الطلب عبر واتساب */}
+                    <button
+                      onClick={() => handleWhatsAppOrder(book.title, book.author, book.price)}
+                      className="w-full bg-[#d0a074] hover:bg-[#b88a5a] text-white font-semibold py-3 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]"
+                      aria-label={`طلب ${book.title} عبر واتساب`}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                      </svg>
+                      <span>اطلب عبر واتساب</span>
+                    </button>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* المجموعة الثانية */}
+        <div className="mb-16">
+          <Swiper
+            modules={[Navigation, Pagination]}
+            spaceBetween={24}
+            slidesPerView={1}
+            slidesPerGroup={1}
+            navigation
+            pagination={{ clickable: true }}
+            initialSlide={3}
+            breakpoints={{
+              640: {
+                slidesPerView: 2,
+                slidesPerGroup: 1,
+              },
+              1024: {
+                slidesPerView: 4,
+                slidesPerGroup: 1,
+              },
+            }}
+          >
+            {books.slice(11, 21).map((book) => (
+              <SwiperSlide key={book.id}>
+                <div className="group bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full border border-[#c6bbae]/40">
+                  {/* صورة الغلاف */}
+                  <div className="w-full h-72 sm:h-80 relative bg-gradient-to-br from-[#e6e2dc] to-[#c6bbae] overflow-hidden">
+                    <Image
+                      src={book.image}
+                      alt={`غلاف كتاب ${book.title} للمؤلف ${book.author}`}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      loading="lazy"
+                      quality={85}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* معلومات الكتاب */}
+                  <div className="p-5 sm:p-6 font-cairo flex flex-col h-[calc(100%-18rem)]">
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2.5 h-[3.5rem] overflow-hidden text-ellipsis line-clamp-2 leading-snug" title={book.title}>
+                        {formatBookTitle(book.title)}
+                      </h3>
+                      <p className="text-sm sm:text-base text-gray-600 mb-4 font-medium">{book.author}</p>
+
+                      {/* السعر */}
+                      {book.price && (
+                        <p className="text-xl sm:text-2xl font-bold text-[#8a6f47] mb-5">
+                          {formatPrice(book.price)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* زر الطلب عبر واتساب */}
+                    <button
+                      onClick={() => handleWhatsAppOrder(book.title, book.author, book.price)}
+                      className="w-full bg-[#d0a074] hover:bg-[#b88a5a] text-white font-semibold py-3 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]"
+                      aria-label={`طلب ${book.title} عبر واتساب`}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                      </svg>
+                      <span>اطلب عبر واتساب</span>
+                    </button>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* قسم توضيحي - كيف تطلب كتابك */}
+        <section className="bg-white rounded-3xl shadow-lg p-8 sm:p-12 mb-12 sm:mb-16 font-cairo border border-[#c6bbae]/30">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-16 text-center">
+            كيف تطلب كتابك؟
+          </h2>
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
+              {/* Card 1 */}
+              <div className="bg-gradient-to-br from-[#f9f8eb] to-[#ede9da] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full md:w-[280px] min-h-[220px] flex items-center">
+                <div className="flex flex-col items-center text-center w-full">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center text-white font-bold text-2xl mb-5 shadow-lg flex-shrink-0">
+                    1
+                  </div>
+                  <p className="text-gray-900 font-bold text-base leading-relaxed">
+                    اختر الكتاب الذي تريد شراءه
+                  </p>
+                </div>
+              </div>
+
+              {/* Arrow 1 */}
+              <div className="hidden md:flex justify-center items-center flex-shrink-0">
+                <svg className="w-10 h-10 text-[#b6a897] scale-x-[-1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div className="md:hidden flex justify-center my-2">
+                <svg className="w-8 h-8 text-[#b6a897] rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+
+              {/* Card 2 */}
+              <div className="bg-gradient-to-br from-[#f9f8eb] to-[#ede9da] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full md:w-[280px] min-h-[220px] flex items-center">
+                <div className="flex flex-col items-center text-center w-full">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center text-white font-bold text-2xl mb-5 shadow-lg flex-shrink-0">
+                    2
+                  </div>
+                  <p className="text-gray-900 font-bold text-base leading-relaxed">
+                    اضغط على زر "اطلب عبر واتساب"
+                  </p>
+                </div>
+              </div>
+
+              {/* Arrow 2 */}
+              <div className="hidden md:flex justify-center items-center flex-shrink-0">
+                <svg className="w-10 h-10 text-[#b6a897] scale-x-[-1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div className="md:hidden flex justify-center my-2">
+                <svg className="w-8 h-8 text-[#b6a897] rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+
+              {/* Card 3 */}
+              <div className="bg-gradient-to-br from-[#f9f8eb] to-[#ede9da] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full md:w-[280px] min-h-[220px] flex items-center">
+                <div className="flex flex-col items-center text-center w-full">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center text-white font-bold text-2xl mb-5 shadow-lg flex-shrink-0">
+                    3
+                  </div>
+                  <p className="text-gray-900 font-bold text-base leading-relaxed">
+                    سيتم فتح واتساب برسالة جاهزة باسم الكتاب
+                  </p>
+                </div>
+              </div>
+
+              {/* Arrow 3 */}
+              <div className="hidden md:flex justify-center items-center flex-shrink-0">
+                <svg className="w-10 h-10 text-[#b6a897] scale-x-[-1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div className="md:hidden flex justify-center my-2">
+                <svg className="w-8 h-8 text-[#b6a897] rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+
+              {/* Card 4 */}
+              <div className="bg-gradient-to-br from-[#f9f8eb] to-[#ede9da] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full md:w-[280px] min-h-[220px] flex items-center">
+                <div className="flex flex-col items-center text-center w-full">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center text-white font-bold text-2xl mb-5 shadow-lg flex-shrink-0">
+                    4
+                  </div>
+                  <p className="text-gray-900 font-bold text-base leading-relaxed">
+                    أرسل الرسالة، وستتواصل معك المكتبة عبر واتساب لتأكيد الطلب
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* قسم مميزاتنا */}
+        <section className="bg-white rounded-3xl shadow-lg p-8 sm:p-12 mb-12 sm:mb-16 font-cairo border border-[#c6bbae]/30">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-14 text-center">
+            لماذا تختار قل ربي زدني علما؟
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {/* ميزة 1 */}
+            <div className="bg-gradient-to-br from-[#f9f8eb] to-[#f6f5f3] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">توصيل سريع</h3>
+              <p className="text-base text-gray-700 leading-relaxed">نوصل طلبك بأسرع وقت ممكن</p>
+            </div>
+
+            {/* ميزة 2 */}
+            <div className="bg-gradient-to-br from-[#f9f8eb] to-[#f6f5f3] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">كتب أصلية</h3>
+              <p className="text-base text-gray-700 leading-relaxed">جميع الكتب أصلية ومضمونة الجودة</p>
+            </div>
+
+            {/* ميزة 3 */}
+            <div className="bg-gradient-to-br from-[#f9f8eb] to-[#f6f5f3] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">أسعار مناسبة</h3>
+              <p className="text-base text-gray-700 leading-relaxed">أسعار تنافسية ومناسبة للجميع</p>
+            </div>
+
+            {/* ميزة 4 */}
+            <div className="bg-gradient-to-br from-[#f9f8eb] to-[#f6f5f3] rounded-2xl shadow-md p-8 border border-[#c6bbae]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#d0a074] to-[#b88a5a] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">خدمة عملاء متميزة</h3>
+              <p className="text-base text-gray-700 leading-relaxed">نحن دائماً هنا لمساعدتك</p>
+            </div>
+          </div>
+        </section>
+
+        {/* قسم الأسئلة الشائعة */}
+        <section className="bg-white rounded-3xl shadow-lg p-8 sm:p-12 mb-12 sm:mb-16 font-cairo border border-[#c6bbae]/30">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-12 text-center">
+            أسئلة شائعة
+          </h2>
+          <div className="max-w-4xl mx-auto space-y-5">
+            {/* سؤال 1 */}
+            <div className="bg-gradient-to-r from-[#f9f8eb] to-[#f6f5f3] rounded-2xl p-6 sm:p-8 border border-[#c6bbae]/40 hover:shadow-md transition-all duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                💳 كيف يمكنني الدفع؟
+              </h3>
+              <p className="text-gray-700 text-base leading-relaxed">
+                الدفع يتم نقداً عند الاستلام. لا حاجة للدفع مسبقاً.
+              </p>
+            </div>
+
+            {/* سؤال 2 */}
+            <div className="bg-gradient-to-r from-[#f9f8eb] to-[#f6f5f3] rounded-2xl p-6 sm:p-8 border border-[#c6bbae]/40 hover:shadow-md transition-all duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                📦 كم تستغرق مدة التوصيل؟
+              </h3>
+              <p className="text-gray-700 text-base leading-relaxed">
+                نوصل الطلبات خلال 3-7 أيام عمل حسب موقعك. سيتم التواصل معك عبر واتساب لتأكيد العنوان.
+              </p>
+            </div>
+
+            {/* سؤال 3 */}
+            <div className="bg-gradient-to-r from-[#f9f8eb] to-[#f6f5f3] rounded-2xl p-6 sm:p-8 border border-[#c6bbae]/40 hover:shadow-md transition-all duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                🗺️ هل تصلون لجميع المناطق؟
+              </h3>
+              <p className="text-gray-700 text-base leading-relaxed">
+                نعم، نقدم خدمة التوصيل لجميع أنحاء تونس. يمكنك التواصل معنا عبر واتساب للاستفسار عن منطقتك.
+              </p>
+            </div>
+
+            {/* سؤال 4 */}
+            <div className="bg-gradient-to-r from-[#f9f8eb] to-[#f6f5f3] rounded-2xl p-6 sm:p-8 border border-[#c6bbae]/40 hover:shadow-md transition-all duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                📚 هل جميع الكتب متوفرة؟
+              </h3>
+              <p className="text-gray-700 text-base leading-relaxed">
+                نعم، جميع الكتب المعروضة متوفرة. في حالة عدم التوفر، سنتواصل معك فوراً عبر واتساب.
+              </p>
+            </div>
+
+            {/* سؤال 5 */}
+            <div className="bg-gradient-to-r from-[#f9f8eb] to-[#f6f5f3] rounded-2xl p-6 sm:p-8 border border-[#c6bbae]/40 hover:shadow-md transition-all duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                ❓ هل يمكنني طلب أكثر من كتاب؟
+              </h3>
+              <p className="text-gray-700 text-base leading-relaxed">
+                نعم بالطبع! يمكنك طلب أي عدد من الكتب. فقط اختر الكتب التي تريدها واضغط على زر "اطلب عبر واتساب" لكل كتاب.
+              </p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      {/* Floating WhatsApp Button - Big Icon in Right Corner */}
+      <button
+        onClick={() => {
+          // تتبع حدث Facebook Pixel: Contact (اتصال عام)
+          trackFacebookEvent("Contact");
+          
+          const message = "سلام عليكم";
+          const whatsappUrl = `https://wa.me/+905011375220?text=${encodeURIComponent(message)}`;
+          window.open(whatsappUrl, "_blank");
+        }}
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 sm:w-20 sm:h-20 bg-[#d0a074] hover:bg-[#b88a5a] rounded-full shadow-2xl hover:shadow-[#d0a074]/50 transition-all duration-300 flex items-center justify-center group hover:scale-110"
+        aria-label="اطلب الآن عبر واتساب"
+      >
+        <svg
+          className="w-10 h-10 sm:w-12 sm:h-12 text-white"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+        </svg>
+      </button>
+
+      {/* Footer */}
+      <footer className="bg-[#c6bbae] text-gray-800 py-8 font-cairo">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6">
+            <div className="flex justify-center items-center gap-6">
+              {/* Facebook Icon */}
+              <a
+                href="https://www.facebook.com/profile.php?id=100092725701351"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#b6a897] hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors"
+                aria-label="صفحتنا على فيسبوك"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </a>
+
+              {/* Instagram Icon */}
+              <a
+                href="https://www.instagram.com/Books.besher"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#b6a897] hover:bg-gradient-to-r hover:from-purple-500 hover:via-pink-500 hover:to-orange-500 rounded-full flex items-center justify-center transition-all"
+                aria-label="صفحتنا على إنستغرام"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                </svg>
+              </a>
+            </div>
+          </div>
+          <div className="text-center border-t border-[#ae9f8c] pt-6 mt-6">
+            <p className="text-sm">
+              © 2025 قل ربي زدني علما. جميع الحقوق محفوظة.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
