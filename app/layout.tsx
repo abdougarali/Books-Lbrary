@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Reem_Kufi, Amiri, Cairo, Scheherazade_New } from "next/font/google";
 import "./globals.css";
 import FacebookPixel from "@/components/FacebookPixel";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const reemKufi = Reem_Kufi({
   weight: ["400", "700"],
@@ -32,19 +33,19 @@ const scheherazadeNew = Scheherazade_New({
 });
 
 export const metadata: Metadata = {
-  title: "مكتبة بشر - شراء الكتب الإسلامية أونلاين",
+  title: "مكتبة العلم نور - شراء الكتب الإسلامية أونلاين",
   description: "مكتبة إسلامية أونلاين - اطلب كتابك المفضل عبر واتساب بسهولة. مجموعة متنوعة من الكتب الإسلامية والفقهية والتفسير",
   keywords: ["مكتبة إسلامية", "كتب إسلامية", "كتب دينية", "كتب فقهية", "تفسير القرآن", "السيرة النبوية", "شراء كتب أونلاين", "تونس"],
   authors: [{ name: "مكتبة بشر" }],
   openGraph: {
-    title: "مكتبة بشر - شراء الكتب الإسلامية أونلاين",
+    title: "مكتبة العلم نور - شراء الكتب الإسلامية أونلاين",
     description: "مكتبة إسلامية أونلاين - اطلب كتابك المفضل عبر واتساب بسهولة",
     type: "website",
     locale: "ar_TN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "مكتبة بشر - شراء الكتب الإسلامية أونلاين",
+    title: "مكتبة العلم نور - شراء الكتب الإسلامية أونلاين",
     description: "مكتبة إسلامية أونلاين - اطلب كتابك المفضل عبر واتساب بسهولة",
   },
 };
@@ -59,6 +60,7 @@ export default function RootLayout({
       <body
         className={`${reemKufi.variable} ${amiri.variable} ${cairo.variable} ${scheherazadeNew.variable} antialiased`}
       >
+        <GoogleAnalytics />
         <FacebookPixel />
         {children}
       </body>

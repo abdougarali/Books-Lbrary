@@ -9,6 +9,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { trackFacebookEvent } from "@/components/FacebookPixel";
+import { trackGAEvent } from "@/components/GoogleAnalytics";
 
 /**
  * صفحة Demo / MVP لمكتبة إسلامية
@@ -32,6 +33,16 @@ export default function Home() {
     // تتبع حدث Contact (اتصال)
     trackFacebookEvent("Contact", {
       content_name: bookTitle,
+    });
+
+    // تتبع حدث Google Analytics: النقر على زر واتساب في بطاقة الكتاب
+    trackGAEvent("whatsapp_order_click", {
+      book_title: bookTitle,
+      book_author: author,
+      book_price: price ? price / 1000 : undefined,
+      currency: "TND",
+      event_category: "engagement",
+      event_label: "Book Order",
     });
 
     let message = `السلام عليكم ورحمة الله وبركاته\n\n`;
@@ -521,6 +532,12 @@ export default function Home() {
         onClick={() => {
           // تتبع حدث Facebook Pixel: Contact (اتصال عام)
           trackFacebookEvent("Contact");
+          
+          // تتبع حدث Google Analytics: النقر على الزر العائم
+          trackGAEvent("whatsapp_floating_button_click", {
+            event_category: "engagement",
+            event_label: "Floating WhatsApp Button",
+          });
           
           const message = "سلام عليكم";
           const whatsappUrl = `https://wa.me/+905011375220?text=${encodeURIComponent(message)}`;
