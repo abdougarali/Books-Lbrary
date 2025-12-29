@@ -92,19 +92,19 @@ export default function BookDetailsModal({
       />
 
       {/* Modal Content */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
         <div
-          className="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto font-cairo"
+          className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto font-cairo my-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* زر الإغلاق */}
           <button
             onClick={onClose}
-            className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
+            className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 w-9 h-9 sm:w-10 sm:h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110"
             aria-label="إغلاق"
           >
             <svg
-              className="w-6 h-6 text-gray-700"
+              className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -120,45 +120,46 @@ export default function BookDetailsModal({
 
           <div className="flex flex-col md:flex-row">
             {/* صورة الكتاب - الجانب الأيسر */}
-            <div className="w-full md:w-2/5 h-80 md:h-auto relative bg-gradient-to-br from-[#e6e2dc] to-[#c6bbae]">
+            <div className="w-full md:w-2/5 h-64 sm:h-80 md:h-auto min-h-[250px] sm:min-h-[300px] md:min-h-0 relative bg-gradient-to-br from-[#e6e2dc] to-[#c6bbae] flex-shrink-0">
               <Image
                 src={book.image}
                 alt={`غلاف كتاب ${book.title} للمؤلف ${book.author}`}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, 40vw"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, 40vw"
                 quality={90}
+                priority
               />
             </div>
 
             {/* معلومات الكتاب - الجانب الأيمن */}
-            <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col">
+            <div className="w-full md:w-3/5 p-4 sm:p-6 md:p-8 flex flex-col min-h-0">
               {/* العنوان */}
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
                 {formatBookTitle(book.title)}
               </h2>
 
               {/* المؤلف */}
-              <p className="text-lg md:text-xl text-gray-600 mb-4 font-medium">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-3 sm:mb-4 font-medium">
                 ✍️ {book.author}
               </p>
 
               {/* السعر */}
               {book.price && (
-                <p className="text-2xl md:text-3xl font-bold text-[#8a6f47] mb-6">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#8a6f47] mb-4 sm:mb-6">
                   {formatPrice(book.price)}
                 </p>
               )}
 
               {/* الوصف */}
-              <div className="flex-1 mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3">عن الكتاب</h3>
+              <div className="flex-1 mb-4 sm:mb-6 overflow-y-auto min-h-0">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">عن الكتاب</h3>
                 {book.description ? (
-                  <p className="text-base md:text-lg text-gray-700 leading-relaxed whitespace-pre-line">
+                  <p className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed whitespace-pre-line">
                     {book.description}
                   </p>
                 ) : (
-                  <p className="text-base md:text-lg text-gray-500 italic">
+                  <p className="text-sm sm:text-base md:text-lg text-gray-500 italic">
                     سيتم إضافة وصف الكتاب قريباً...
                   </p>
                 )}
@@ -167,11 +168,11 @@ export default function BookDetailsModal({
               {/* زر الطلب عبر واتساب */}
               <button
                 onClick={handleWhatsAppOrder}
-                className="w-full bg-[#d0a074] hover:bg-[#b88a5a] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl active:scale-[0.98] text-lg"
+                className="w-full bg-[#d0a074] hover:bg-[#b88a5a] text-white font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl active:scale-[0.98] text-base sm:text-lg flex-shrink-0"
                 aria-label={`طلب ${book.title} عبر واتساب`}
               >
                 <svg
-                  className="w-6 h-6"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
