@@ -160,7 +160,7 @@ export default function Home() {
     name: "قل ربي زدني علما",
     description: "مكتبة إسلامية أونلاين - اطلب كتابك المفضل عبر واتساب بسهولة",
     url: origin || "", // Will be empty on server, set on client
-    telephone: "+905011375220",
+    telephone: "+21626010403",
     priceRange: "$$",
     address: {
       "@type": "PostalAddress",
@@ -173,7 +173,7 @@ export default function Home() {
     ],
     potentialAction: {
       "@type": "CommunicateAction",
-      target: "https://wa.me/+905011375220",
+      target: "https://wa.me/+21626010403",
       "http://schema.org/instrument": "WhatsApp"
     }
   }), [origin]);
@@ -584,7 +584,7 @@ export default function Home() {
           });
           
           const message = "سلام عليكم";
-          const whatsappUrl = `https://wa.me/+905011375220?text=${encodeURIComponent(message)}`;
+          const whatsappUrl = `https://wa.me/+21626010403?text=${encodeURIComponent(message)}`;
           window.open(whatsappUrl, "_blank");
         }}
         className="fixed bottom-6 right-6 z-50 w-16 h-16 sm:w-20 sm:h-20 bg-[#d0a074] hover:bg-[#b88a5a] rounded-full shadow-2xl hover:shadow-[#d0a074]/50 transition-all duration-300 flex items-center justify-center group hover:scale-110"
